@@ -41,6 +41,12 @@ end
 # ╔═╡ 14195fc4-40e1-4576-973a-69d649fddc02
 TableOfContents(title="📚 Table of Contents", indent=true, depth=4, aside=true)
 
+# ╔═╡ e2f7212d-00e3-4587-b28e-5038f8c9bb12
+md"""
+## By Ethan Shin and Joe Palmo
+### Last edit: 10/01/2024
+"""
+
 # ╔═╡ 92883ed9-5572-41fd-96c7-190279f90804
 md"""
 This lecture is based on the fall 2020 "Introduction to Climate Modeling" lecture by Henri Drake. [Henri's video](https://computationalthinking.mit.edu/Fall20/lecture20/),
@@ -3441,6 +3447,7 @@ version = "1.4.1+1"
 
 # ╔═╡ Cell order:
 # ╟─14195fc4-40e1-4576-973a-69d649fddc02
+# ╟─e2f7212d-00e3-4587-b28e-5038f8c9bb12
 # ╠═c7d387fa-cd19-458c-a45d-7893e8c21bbf
 # ╟─92883ed9-5572-41fd-96c7-190279f90804
 # ╟─340fc7c4-128f-4476-b445-65005ffa9f5a
