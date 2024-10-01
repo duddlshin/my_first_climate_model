@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.19.45
 
 #> [frontmatter]
 #> chapter = 3
@@ -468,12 +468,9 @@ end
 greenhouse_effect(CO₂(15))
 
 # ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
-#=╠═╡
 p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
-  ╠═╡ =#
 
 # ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
-#=╠═╡
 begin
 	plot(solve(p3),       legend = false, 
 		 background_color_inside = :black,
@@ -484,7 +481,6 @@ begin
 	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
 	title!("Model with CO₂")
 end
-  ╠═╡ =#
 
 # ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
 begin
@@ -494,14 +490,79 @@ begin
 	ylabel!("CO₂ (ppm)")
 end
 
+# ╔═╡ 53e72aa1-c21b-4ae5-983f-34c5311a02fc
+md"""
+### Observations from Mauna Loa Volcano 
+
+![Mauna Loa Volcano](https://i.pinimg.com/originals/df/1a/e7/df1ae72cfd5e6d0d535c0ec99e708f6f.jpg)
+
+information is available at
+[https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/law/law2006.txt]
+(https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/law/law2006.txt).
+"""
+
+# ╔═╡ 09cd7d8c-5462-411f-9a2c-8bc7eb262cf9
+CO2_historical_data_url = "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+
+# ╔═╡ fa9e5f1f-ad59-462b-8db3-e393fdaebcac
+CO2_historical_path = download(CO2_historical_data_url)
+
+# ╔═╡ 24b823c2-24c5-441a-b71b-fd86e1f0bd2b
+begin
+
+	CO2_offset = findfirst(!startswith("#"), readlines(CO2_historical_path))
+
+	CO2_historical_data_raw = CSV.read(
+		CO2_historical_path, DataFrame; 
+		header=CO2_offset, 
+		skipto=CO2_offset + 1,
+	);
+
+
+	first(CO2_historical_data_raw, 11)
+end
+
+# ╔═╡ 47bf7850-d9f5-4866-a604-7ac4f27e74ef
+md"""
+Data is in the column `"average"`.
+"""
+
+# ╔═╡ 3bf6b64c-83ca-47e3-8a93-e22cdd12caba
+md"""
+Oh no, missing data (-99.99)
+"""
+
+# ╔═╡ d60f897a-0d38-456d-a27f-4cce8d7bc66a
+validrowsmask = CO2_historical_data_raw[:, "average"] .> 0
+
+# ╔═╡ 2518f5dc-9972-42ba-9f83-0c60433acdb8
+CO2_historical_data = CO2_historical_data_raw[validrowsmask,:];
+
+# ╔═╡ 4ab1688f-bf05-4d0c-8c21-a58e02219feb
+begin
+	plot( CO2_historical_data[:, "decimal date"] , CO2_historical_data[:, "average"], label="Mauna Loa CO₂ data (Keeling curve)")
+	plot!( years, CO₂.(years.-1850), lw=3 , label="Cubic Fit", legend=:topleft)
+
+	title!("CO₂ observations and fit")
+end
+
 # ╔═╡ 3304174c-289d-47c5-b5ef-161b11e515eb
-#=╠═╡
 md"""
 Climate feedback BB = $(@bind BB Slider(0:.1:4, show_value=true, default=B))
 
 Ocean Heat Capacity CC =$(@bind CC Slider(10:.1:200, show_value=true, default=C))
 """
-  ╠═╡ =#
+
+# ╔═╡ 98833d5e-b651-43aa-9dd6-e9f3fca7bb17
+p4 = ODEProblem( (temp, p, t)-> (1/CC) * ( BB*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
+
+# ╔═╡ 6baeb906-a37a-43c7-ad66-024039d1d695
+begin
+	T_url = "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt";
+	T_df = CSV.read(download(T_url),DataFrame, header=false, skipto=6,delim="     ");
+    # T_df = T_df[:,[1,6]]
+	
+end
 
 # ╔═╡ 28acb5a4-2a5f-49c5-9c78-deb40fdeed36
 md""" #####  Best- and worst-case projections of future global warming
@@ -538,9 +599,16 @@ html"""
 
 
 # ╔═╡ 6800c94d-e7f3-43a8-a823-1c550cb8fc95
-#=╠═╡
 solp4 = solve(p4)
-  ╠═╡ =#
+
+# ╔═╡ 87617bd5-cfa7-42fb-8237-7391364f5d4a
+begin
+	plot(years,solp4.(years.-1850),lw=2,label="Predicted Temperature from model", legend=:topleft)
+	xlabel!("year")
+	ylabel!("Temp °C")
+	
+	plot!( T_df[:,1], parse.(Float64, T_df[:,2]) .+ 14.15, color=:black, label="NASA Observations", legend=:topleft)
+end
 
 # ╔═╡ baf95f17-1fcb-4e56-a4c9-46de1da7f636
 md"""
@@ -895,7 +963,7 @@ PlutoUI = "~0.7.48"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.5"
+julia_version = "1.10.2"
 manifest_format = "2.0"
 project_hash = "84be7df5c283a123fd84ef23e9559e7c8b8286a7"
 
@@ -1153,7 +1221,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.1+0"
+version = "1.1.0+0"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "802bb88cd69dfd1509f6670416bd4434015693ad"
@@ -3366,7 +3434,7 @@ version = "0.15.2+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.11.0+0"
+version = "5.8.0+1"
 
 [[deps.libdecor_jll]]
 deps = ["Artifacts", "Dbus_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pango_jll", "Wayland_jll", "xkbcommon_jll"]
@@ -3504,10 +3572,22 @@ version = "1.4.1+1"
 # ╠═1a4d21bd-85ad-4935-913a-8992a8996db4
 # ╠═ee6414b7-e92d-4055-af17-6b02f05c28cd
 # ╠═fac5012a-960c-473c-bbf0-62c0be87f608
-# ╟─99629ec2-dc70-4253-b191-305bccc9f36b
-# ╟─6b2beeec-6383-42b3-b694-8d77b961c8a1
+# ╠═99629ec2-dc70-4253-b191-305bccc9f36b
+# ╠═6b2beeec-6383-42b3-b694-8d77b961c8a1
 # ╠═0b24f105-0166-4a41-97aa-156417d7203a
+# ╟─53e72aa1-c21b-4ae5-983f-34c5311a02fc
+# ╠═09cd7d8c-5462-411f-9a2c-8bc7eb262cf9
+# ╠═fa9e5f1f-ad59-462b-8db3-e393fdaebcac
+# ╠═24b823c2-24c5-441a-b71b-fd86e1f0bd2b
+# ╟─47bf7850-d9f5-4866-a604-7ac4f27e74ef
+# ╟─3bf6b64c-83ca-47e3-8a93-e22cdd12caba
+# ╠═d60f897a-0d38-456d-a27f-4cce8d7bc66a
+# ╠═2518f5dc-9972-42ba-9f83-0c60433acdb8
+# ╠═4ab1688f-bf05-4d0c-8c21-a58e02219feb
+# ╠═87617bd5-cfa7-42fb-8237-7391364f5d4a
 # ╟─3304174c-289d-47c5-b5ef-161b11e515eb
+# ╠═98833d5e-b651-43aa-9dd6-e9f3fca7bb17
+# ╠═6baeb906-a37a-43c7-ad66-024039d1d695
 # ╟─28acb5a4-2a5f-49c5-9c78-deb40fdeed36
 # ╟─13b003d2-1fd4-4a4a-960c-4a1d9b673dc6
 # ╟─a2288816-3621-4871-9faf-3e9c78674969
