@@ -43,8 +43,9 @@ TableOfContents(title="📚 Table of Contents", indent=true, depth=4, aside=true
 
 # ╔═╡ e2f7212d-00e3-4587-b28e-5038f8c9bb12
 md"""
-## By Ethan Shin and Joe Palmo
-### Last edit: 10/01/2024
+# My first climate model
+### By Ethan Shin and Joe Palmo
+#### Last edit: 10/01/2024
 """
 
 # ╔═╡ 92883ed9-5572-41fd-96c7-190279f90804
@@ -233,7 +234,7 @@ begin
 	p_2 = plot(x, y_pert2, lw=3, 
 		xlabel="Time (days)", ylabel="", xlabelfontsize=16, ylabelfontsize=16, 
 		xticks=:none, yticks=:none, 
-		legend=:false, xlims=(0.5,0.9), ylims=(0,3), title="Weather", titlefontsize=16, linecolor=:red);
+		legend=:false, xlims=(0.5,0.9), ylims=(0,3), title="Weather", titlefontsize=16, linecolor=:blue);
 	
 	plot(p_1, p_2, layout=(1, 2), size=(1000,400))
 end
@@ -254,94 +255,150 @@ Climate models are used by scientists to answer many different questions, includ
 html"""<img src="https://www.noaa.gov/sites/default/files/styles/landscape_width_1275/public/2022-03/PHOTO-Climate-Collage-Diagonal-Design-NOAA-Communications-NO-NOAA-Logo.jpg
 " height=400>"""
 
-# ╔═╡ aba7fc93-c0ac-4c9e-b975-18145f87707f
-md"""#### Background: climate physics
+# ╔═╡ a44f4f86-a6c9-4c07-ab5a-a631484349c7
+md"""
+Source: NOAA
+"""
 
-The simplest climate model can be conceptualized as:
-```math
-\begin{align}
-\text{\color{brown}{change in heat content}} = & + \text{\color{orange}{absorbed solar radiation (energy from the Sun's rays)}} \newline
-& - \text{\color{blue}{outgoing thermal radiation (i.e. blackbody cooling to space)}}
-\newline
-& + \text{\color{grey}{human-caused greenhouse effect (trapped outgoing radiation)}}
-\end{align}
-```
-where each of these is interpreted as an average over the entire globe (hence "zero-dimensional").
+# ╔═╡ 2930cecd-0740-494f-801c-dd12dfe4dcf2
+
+
+# ╔═╡ aba7fc93-c0ac-4c9e-b975-18145f87707f
+md"""### Climate modeling 101
+
+
+Let's start building our first climate model. The most important step to building a climate model is conceptualizing the science happening in our climate.
+
+We start with the total energy budget of the Earth over time
+
+$\frac{dE}{dt} = \text{net energy flux in system}
+ =  \text{inputs - outputs}$
+"""
+
+# ╔═╡ 2cdbf101-5a23-408a-8679-bdb10ca85213
+md"""
+The energy budget is important in modeling our very dynamic climate. It is, in fact, the best place to start! In the most intuitive way of explaining, knowing the energy balance in will let us know if our planet is heating up or cooling!
+
+Now, let's look at this diagram below that shows the global energy budget.
 """
 
 # ╔═╡ b9eca29e-9028-4fd7-8c62-718a2dcf87d1
-html"""<img src="https://raw.githubusercontent.com/hdrake/hdrake.github.io/master/figures/planetary_energy_balance.png" height=225>"""
+html"""<img src="https://raw.githubusercontent.com/hdrake/hdrake.github.io/master/figures/planetary_energy_balance.png" height=340>"""
+
+# ╔═╡ bfc37132-b5d1-49da-b2e8-d32e8ee8d92a
+md"""
+We see some energy going in, some energy going out, some going back in... these are all inputs and outputs that we will include in our simple climate model. Obviously, the more these inputs/outputs represent the real climate physics, the better the model predictions should be right? Well, to an extent - we'll talk about uncertainty at the end of this notebook.
+
+Anyways, the components in the figure above can be summarized in this equation: 
+
+```math
+\begin{align}
+\text{\color{brown}{Change in heat content over time}} = & + \text{\color{yellow}{absorbed solar radiation}} \newline
+& - \text{\color{blue}{outgoing thermal radiation}}
+\newline
+& + \text{\color{grey}{human-caused greenhouse effect}}
+\end{align}
+```
+where each of these is interpreted as an average over the entire globe (hence "zero-dimensional").
+
+Let's explore this equation piece by piece!
+"""
+
+# ╔═╡ 5904b781-bd19-4e29-8327-419c80bb9135
+
+
+# ╔═╡ c59829f3-d5f0-4d61-afed-372b3386284a
+md"""
+#### 1.0 Change in heat content over time
+"""
+
+# ╔═╡ 6396f59f-03e3-46b4-998f-3660f2676059
+md"""
+From the energy budget, let us assume that the energy content of the Earth is fully heat content and is proportional to the temperature:
+
+$E = CT$
+
+"""
+
+# ╔═╡ efa6aa47-894f-4124-984d-79874cdd4ba2
+md"""
+The *change in heat content over time* is thus simply given by $\frac{d(CT)}{dt}$. Since the heat capacity of sea water hardly changes with temperature, we can rewrite this in terms of the change in temperature with time as:
+
+$\color{brown}{\text{change in heat content } =\; C \frac{dT}{dt}}$
+"""
 
 # ╔═╡ dabca25c-e34b-4aed-8729-132d03c5bb45
 md"""
-### 1.1 Incoming 🌞: Absorbed solar radiation
-(an example of $\mathrm{temp}$'=constant)
+#### 1.1 Incoming solar radiation
 """
-
-# ╔═╡ 5123525a-3437-4b76-813c-8ad6b158f7f2
-md"""
-##### (Heating the earth nonstop)
-"""
-
-# ╔═╡ 087f47b2-8283-4205-88f2-4d5883a340c2
-md"""
-
-
-At Earth's orbital distance from the Sun, the power of the Sun's rays that intercept the Earth is equal to
-"""
-
-# ╔═╡ 9c89c4e9-65ee-4424-bd74-17168b211797
-S = 1368; # solar insolation [W/m^2]  (energy per unit time per unit area)
-
-# ╔═╡ ca5b41d2-b511-486a-91fe-cceb8f7282c3
-md"A small fraction"
-
-# ╔═╡ 13984c61-4c34-40db-9043-fcff2721522e
-α = 0.3; # albedo, or planetary reflectivity [unitless]
 
 # ╔═╡ d74936e9-b760-4add-b3e7-46d544064c16
 md"""
-In math we just write down a differential equation, but in the physical world there are physical variables to identify.
+
+The earth absorbing the incoming solar radiation (per unit area) can be expressed with this equation 
+
+$\color{yellow} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
+
+Now is a great time to ask, why?
+"""
+
+# ╔═╡ e476f8c0-c880-459c-be16-508937b86170
+html"""<img src="https://www.open.edu/openlearn/ocw/pluginfile.php/101161/mod_oucontent/oucontent/890/639dcd57/ce3f1c3a/s250_3_002i.jpg" height=340>"""
+
+# ╔═╡ 5818fd37-0d7a-494c-a7f4-e22833183f2e
+md"""
+
+The total solar Insolation is $S$ = 1368 W/m^2. But not all of the incoming solar radiation is absorbed. In factorial, some of it is reflected back out to space due to reflective surfaces like white clouds, snow, and ice. This we call albedo $\alpha$.
+
+Finally, since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
+
+Hence, we end up with this equation (shown again):
+
+$\color{yellow} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
+"""
+
+# ╔═╡ 67e22776-bcad-4cac-abf0-637925b20b5b
+md"""
+Now, in the physical world, this differential equation needs physical variables.
 
 In our baking the earth example, we will identify the following quantities:
 
 - Industrial Revolution Start: 1850
 - Avg Temperature in 1850: 14.0 °C
 
-- Solar Insolation $S=$1368 W/m^2:  energy from the sun
+- Solar Insolation S = 1368 W/m^2:  energy from the sun
 
 - Albedo or plentary reflectivity: α = 0.3
 
 - atmosphere and upper-ocean heat capacity: C= 51  J/m^2/°C 
 
-Earth Baking Formula:
-$(html"<br>")
- `` C\  \mathrm{temp}'(t) = S(1-α)/4 = `` $(round(S*(1-α)/4; sigdigits=4))
+
+
 """
 
-# ╔═╡ 868e19f4-d71e-4222-9bdd-470387991c67
+# ╔═╡ 5123525a-3437-4b76-813c-8ad6b158f7f2
 md"""
-of this incoming solar radiation is reflected back out to space (by reflective surfaces like white clouds, snow, and ice), with the remaining fraction $(1-\alpha)$ being absorbed.
+Now consider a situation where you only have incoming solar radiation and have no output (Heating the earth nonstop).
 
-Since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
+So, this equation is really accurately describing our Earth:
 
-![](https://www.open.edu/openlearn/ocw/pluginfile.php/101161/mod_oucontent/oucontent/890/639dcd57/ce3f1c3a/s250_3_002i.jpg)
 
-The absorbed solar radiation per unit area is thus
+$C \frac{dT}{dt} =  \frac{S(1-α)}{4}$
 
-$\textcolor{orange}{\text{absorbed solar radiation} \equiv \frac{S(1-\alpha)}{4}}$
+Let's solve this simple equation.
 """
 
-# ╔═╡ 0e4dedc5-0b1e-4e46-b943-284bfb2de57f
-absorbed_solar_radiation = S*(1 - α)/4; # [W/m^2]
-
-# ╔═╡ 91329865-f593-4388-a5d0-01af4be6e01d
+# ╔═╡ 9123cc7a-acc8-4068-acb1-a79ba522888e
 begin
 	C = 51.; # atmosphere and upper-ocean heat capacity [Wyr/m^2/°C]
 	temp₀ = 14.0 # preindustrial temperature [°C]
+	S = 1368; # solar insolation [W/m^2]  (energy per unit time per unit area)
+	α = 0.3; # albedo, or planetary reflectivity [unitless]
+
+	absorbed_solar_radiation = S*(1 - α)/4; # [W/m^2]
 end
 
-# ╔═╡ 7187ae25-239d-4752-898e-6674009b5de6
+# ╔═╡ f3930148-088a-4b50-a487-2c216379a0d0
 p1 = ODEProblem(
 	(temp, p, t) -> (1/C) * absorbed_solar_radiation,
 	temp₀,
@@ -359,20 +416,14 @@ begin
 	title!("Absorbing Solar Radiation (only)")
 end
 
-# ╔═╡ ad1e294e-ad8a-48f9-b924-2474cce16aaf
-md"""The heat content $C temp$ is determined by the temperature $temp$ (in Kelvin) and the heat capacity of the climate system. While we are interested in the temperature of the atmosphere, which has a very small heat capacity, its heat is closely coupled with that of the upper ocean, which has a much larger heat capacity of 
-"""
-
-# ╔═╡ 2086e386-194b-4863-a9ee-178002925d42
+# ╔═╡ 087f47b2-8283-4205-88f2-4d5883a340c2
 md"""
-The *change in heat content over time* is thus simply given by $\frac{d(CT)}{dt}$. Since the heat capacity of sea water hardly changes with temperature, we can rewrite this in terms of the change in temperature with time as:
-
-$\color{brown}{\text{change in heat content } =\; C \frac{dtemp}{dt}}$
+You see how there is a constant increase in temperature. Since the left hand side is a constant, you can see how we have just integrated to get a linear dependency between temperature and time.
 """
 
 # ╔═╡ 2b66ffaf-a9a3-4ca2-a6e9-732912c9d48e
 md"""
-### 1.2 Outgoing ♨ : thermal radiation
+#### 1.2 Outgoing thermal radiation
 """
 
 # ╔═╡ b186d026-d02c-4f06-8097-aa54b363f4fb
@@ -380,17 +431,15 @@ md"""
 
 The outgoing thermal radiation term $\mathcal{G}(T)$ (or "blackbody cooling to space") represents the combined effects of *negative feedbacks that dampen warming*, such as **blackbody radiation**, and *positive feedbacks that amplify warming*, such as the **water vapor feedback**.
 
-Since these physics are too complicated to deal with here, we *linearize* the model
-combining the incoming and the outgoing.  
+That's too complex to model in this notebook, so we will linearize the model combining the incoming and the outgoing.  
 
 We assume that the preindustrial world was in energy balance, and thus
 the equilibrium temperature is the preindustrial temperature.
 
+$\frac{dT}{dt} = B(T_0 - T_t)$
 
-Thus we assume
-
- temp'($t$) = $B$(temp($0$)-temp($t$))  for some value of $B$.
-The minus sign in front of temp(t) indicating it restores equilibrium.
+for some value of $B$.
+The minus sign in front of $T_t$ indicating it restores equilibrium.
 """
 
 # ╔═╡ edafca88-dd4a-4fe4-8ffc-bb50f7bd561d
@@ -423,7 +472,7 @@ end
 
 # ╔═╡ 20d6c513-2ca6-4dea-9092-156e2805d467
 md"""
-### 1.3 Greenhouse 🏭: Human-caused greenhouse effect
+#### 1.3 Human-caused greenhouse effect
 
 Empirically, the greenhouse effect is known to be a logarithmic function of gaseous carbon dioxide (CO₂) concentrations
 
@@ -437,10 +486,10 @@ Time is not modelled in the above equation.
 md"where"
 
 # ╔═╡ 6d1058bf-8a05-4b8e-835a-de9e95f567c4
-forcing_coef = 5.0; # CO2 forcing coefficient [W/m^2]
-
-# ╔═╡ 35184e6f-ac3e-480b-92e9-ed8baaaa833b
-CO₂_PreIndust = 280.; # preindustrial CO2 concentration [parts per million; ppm];
+begin
+	forcing_coef = 5.0; # CO2 forcing coefficient [W/m^2]
+	CO₂_PreIndust = 280.; # preindustrial CO2 concentration [parts per million; ppm];
+end
 
 # ╔═╡ 437faadd-0301-403a-bcd7-18ce279589d0
 greenhouse_effect(CO₂) = forcing_coef * log(CO₂/CO₂_PreIndust)
@@ -468,12 +517,9 @@ end
 greenhouse_effect(CO₂(15))
 
 # ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
-#=╠═╡
 p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
-  ╠═╡ =#
 
 # ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
-#=╠═╡
 begin
 	plot(solve(p3),       legend = false, 
 		 background_color_inside = :black,
@@ -484,7 +530,6 @@ begin
 	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
 	title!("Model with CO₂")
 end
-  ╠═╡ =#
 
 # ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
 begin
@@ -495,13 +540,11 @@ begin
 end
 
 # ╔═╡ 3304174c-289d-47c5-b5ef-161b11e515eb
-#=╠═╡
 md"""
 Climate feedback BB = $(@bind BB Slider(0:.1:4, show_value=true, default=B))
 
 Ocean Heat Capacity CC =$(@bind CC Slider(10:.1:200, show_value=true, default=C))
 """
-  ╠═╡ =#
 
 # ╔═╡ 28acb5a4-2a5f-49c5-9c78-deb40fdeed36
 md""" #####  Best- and worst-case projections of future global warming
@@ -527,21 +570,6 @@ In the low-emissions scenario, the temperature increase stays below $ΔT = 2$ °
 # ╔═╡ fef0a76b-98dc-42a0-975b-0fba8a32e5cc
 md"Although the greenhouse effect due to human-caused CO₂ emissions is the dominant forcing behind historical and future-projected warming, modern climate modelling considers a fairly exhaustive list of other forcing factors (aerosols, other greenhouse gases, ozone, land-use changes, etc.). The video below shows a breakdown of these forcing factors in a state-of-the-art climate model simulation of the historical period."
 
-# ╔═╡ 2368f16c-9805-4dd6-a130-d831211f6155
-html"""
-
-<script src="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/src/lite-yt-embed.js" integrity="sha256-wwYlfEzWnCf2nFlIQptfFKdUmBeH5d3G7C2352FdpWE=" crossorigin="anonymous" defer></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lite-youtube-embed@0.2.0/src/lite-yt-embed.css" integrity="sha256-99PgDZnzzjO63EyMRZfwIIA+i+OS2wDx6k+9Eo7JDKo=" crossorigin="anonymous">
-
-<lite-youtube videoid=E7kMr2OYKSU params="modestbranding=1&rel=0"></lite-youtube>
-"""
-
-
-# ╔═╡ 6800c94d-e7f3-43a8-a823-1c550cb8fc95
-#=╠═╡
-solp4 = solve(p4)
-  ╠═╡ =#
-
 # ╔═╡ baf95f17-1fcb-4e56-a4c9-46de1da7f636
 md"""
 ### Uncertainty in climate models
@@ -565,9 +593,6 @@ md"""
 While climate models are useful sources of information that help us prepare for future climate risks, all climate models have some uncertainty.
 """
 
-# ╔═╡ f4aacb07-52a1-4f0e-92f8-a88251e68260
-
-
 # ╔═╡ d2bd174a-203b-4a74-a4cc-64cb20f890d4
 md"""
 #### 2.2 What are the uncertainties in climate models?
@@ -587,7 +612,7 @@ Model uncertainty arises from using an ensemble of different climate models to m
 Let's consider a simple example based on the model developed above:
 
 
-$\color{grey}{ \text{temp}'(t) =  \frac{1}{C} \left[  B(\text{temp}(0)-\text{temp}(t)) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
+$\color{grey}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(\text{temp}(0)-\text{temp}(t)) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
 
 In real life, models can be different from ground-up due to different assumptions. Here, we will consider models that are different at the simplest level. 
 Models have coefficients that tuned on empirical data or high-fidelity simulations. Having another set of coefficients can be interpreted as another model. 
@@ -673,8 +698,7 @@ Now, specify how many ensemble members you would like to run.
 """
 
 # ╔═╡ 06a37706-eb15-4cca-93e7-bb5b8ebabd26
-@bind ens_members Slider(1:1000)
-
+@bindname ens_members Slider(1:1000, show_value=true, default=1)
 
 
 # ╔═╡ f557039a-90d5-4fd9-bef0-a8c7d9d96b44
@@ -781,17 +805,7 @@ begin
 end
 
 # ╔═╡ 0abf91ca-7307-4dc4-9e91-662247e02c67
-@bind ens_members_alt Slider(1:1000)
-
-# ╔═╡ 6ba2d4f7-56db-4d29-b1de-d4e63c9104d3
-begin
-	println("Ensemble size: ", ens_members_alt)
-end
-
-# ╔═╡ 3756f7e5-47d9-4c7f-9f84-24752f7b7d13
-begin
-	println("Ensemble size: ", ens_members_alt)
-end
+@bindname ens_members_alt Slider(1:1000, show_value=true, default=1)
 
 
 # ╔═╡ 449e87b4-928d-44ee-ac42-d6b0b9993afd
@@ -3473,22 +3487,26 @@ version = "1.4.1+1"
 # ╟─9f05b617-6db5-4706-8615-431732a44f5b
 # ╟─0026f43a-55fa-414a-916c-6547bc201692
 # ╟─01c59e52-b2d1-4e3b-bdd9-fa55711b1cf5
+# ╟─a44f4f86-a6c9-4c07-ab5a-a631484349c7
+# ╟─2930cecd-0740-494f-801c-dd12dfe4dcf2
 # ╟─aba7fc93-c0ac-4c9e-b975-18145f87707f
-# ╟─b9eca29e-9028-4fd7-8c62-718a2dcf87d1
+# ╟─2cdbf101-5a23-408a-8679-bdb10ca85213
+# ╠═b9eca29e-9028-4fd7-8c62-718a2dcf87d1
+# ╟─bfc37132-b5d1-49da-b2e8-d32e8ee8d92a
+# ╟─5904b781-bd19-4e29-8327-419c80bb9135
+# ╟─c59829f3-d5f0-4d61-afed-372b3386284a
+# ╟─6396f59f-03e3-46b4-998f-3660f2676059
+# ╟─efa6aa47-894f-4124-984d-79874cdd4ba2
 # ╟─dabca25c-e34b-4aed-8729-132d03c5bb45
 # ╟─d74936e9-b760-4add-b3e7-46d544064c16
+# ╟─e476f8c0-c880-459c-be16-508937b86170
+# ╟─5818fd37-0d7a-494c-a7f4-e22833183f2e
+# ╟─67e22776-bcad-4cac-abf0-637925b20b5b
 # ╟─5123525a-3437-4b76-813c-8ad6b158f7f2
-# ╟─2f19cbac-4f13-4c2b-9b11-fb92e8055527
+# ╠═9123cc7a-acc8-4068-acb1-a79ba522888e
+# ╠═f3930148-088a-4b50-a487-2c216379a0d0
+# ╠═2f19cbac-4f13-4c2b-9b11-fb92e8055527
 # ╟─087f47b2-8283-4205-88f2-4d5883a340c2
-# ╠═9c89c4e9-65ee-4424-bd74-17168b211797
-# ╟─ca5b41d2-b511-486a-91fe-cceb8f7282c3
-# ╠═13984c61-4c34-40db-9043-fcff2721522e
-# ╟─868e19f4-d71e-4222-9bdd-470387991c67
-# ╠═0e4dedc5-0b1e-4e46-b943-284bfb2de57f
-# ╠═91329865-f593-4388-a5d0-01af4be6e01d
-# ╠═7187ae25-239d-4752-898e-6674009b5de6
-# ╟─ad1e294e-ad8a-48f9-b924-2474cce16aaf
-# ╟─2086e386-194b-4863-a9ee-178002925d42
 # ╟─2b66ffaf-a9a3-4ca2-a6e9-732912c9d48e
 # ╟─b186d026-d02c-4f06-8097-aa54b363f4fb
 # ╟─edafca88-dd4a-4fe4-8ffc-bb50f7bd561d
@@ -3499,13 +3517,12 @@ version = "1.4.1+1"
 # ╟─20d6c513-2ca6-4dea-9092-156e2805d467
 # ╟─692a6928-c7a2-4b61-a794-16bef5d4e919
 # ╠═6d1058bf-8a05-4b8e-835a-de9e95f567c4
-# ╠═35184e6f-ac3e-480b-92e9-ed8baaaa833b
 # ╠═437faadd-0301-403a-bcd7-18ce279589d0
 # ╠═1a4d21bd-85ad-4935-913a-8992a8996db4
 # ╠═ee6414b7-e92d-4055-af17-6b02f05c28cd
 # ╠═fac5012a-960c-473c-bbf0-62c0be87f608
 # ╟─99629ec2-dc70-4253-b191-305bccc9f36b
-# ╟─6b2beeec-6383-42b3-b694-8d77b961c8a1
+# ╠═6b2beeec-6383-42b3-b694-8d77b961c8a1
 # ╠═0b24f105-0166-4a41-97aa-156417d7203a
 # ╟─3304174c-289d-47c5-b5ef-161b11e515eb
 # ╟─28acb5a4-2a5f-49c5-9c78-deb40fdeed36
@@ -3513,13 +3530,10 @@ version = "1.4.1+1"
 # ╟─a2288816-3621-4871-9faf-3e9c78674969
 # ╟─2b9c3427-c3ec-41ba-b3c5-268cf3dddccf
 # ╟─fef0a76b-98dc-42a0-975b-0fba8a32e5cc
-# ╟─2368f16c-9805-4dd6-a130-d831211f6155
-# ╟─6800c94d-e7f3-43a8-a823-1c550cb8fc95
 # ╟─baf95f17-1fcb-4e56-a4c9-46de1da7f636
 # ╟─3c449885-7bb0-4646-903c-997fe61a6397
 # ╟─873ebb96-2aef-4a79-9ca6-80e4d7477c6e
 # ╟─3d599b11-ce58-45fb-9f88-f9b5b4ff9687
-# ╟─f4aacb07-52a1-4f0e-92f8-a88251e68260
 # ╟─d2bd174a-203b-4a74-a4cc-64cb20f890d4
 # ╟─19fbf4e8-f85b-4bdb-adc6-b68f1a7d724a
 # ╟─d0177b79-ce47-4f86-a49f-9bc25ff4d7f7
@@ -3527,8 +3541,7 @@ version = "1.4.1+1"
 # ╠═998f79c5-4edd-49de-bcb9-ea78b60e7dd9
 # ╟─0196cb20-b466-42df-a0d1-b5e5feda1878
 # ╟─f020a0a1-dfa0-4293-b360-07703f9be85d
-# ╟─6ba2d4f7-56db-4d29-b1de-d4e63c9104d3
-# ╠═06a37706-eb15-4cca-93e7-bb5b8ebabd26
+# ╟─06a37706-eb15-4cca-93e7-bb5b8ebabd26
 # ╠═f557039a-90d5-4fd9-bef0-a8c7d9d96b44
 # ╟─09e7a010-cfbb-455e-91f8-96c0bd435c87
 # ╟─ec649b3b-9e9b-41c7-95c1-d42ac8766849
@@ -3538,8 +3551,7 @@ version = "1.4.1+1"
 # ╟─11fac1eb-4996-49d9-8a41-b6a9474a77b1
 # ╠═5096f659-ab5d-4b28-a44f-31b4405ace5a
 # ╟─b074cbba-e6a2-482a-9c34-a0152672d3bd
-# ╟─3756f7e5-47d9-4c7f-9f84-24752f7b7d13
-# ╟─0abf91ca-7307-4dc4-9e91-662247e02c67
+# ╠═0abf91ca-7307-4dc4-9e91-662247e02c67
 # ╟─449e87b4-928d-44ee-ac42-d6b0b9993afd
 # ╟─6af8a850-f050-4421-9794-61c4d9005d0b
 # ╟─0fc98b3a-0785-4482-953d-db506b4d1ac9
