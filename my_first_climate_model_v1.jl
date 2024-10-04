@@ -45,7 +45,7 @@ TableOfContents(title="📚 Table of Contents", indent=true, depth=4, aside=true
 md"""
 # My first climate model
 ### By Ethan Shin and Joe Palmo
-#### Last edit: 10/01/2024
+##### Last edit: 10/04/2024
 """
 
 # ╔═╡ 92883ed9-5572-41fd-96c7-190279f90804
@@ -247,7 +247,9 @@ md"""
 
 # ╔═╡ 0026f43a-55fa-414a-916c-6547bc201692
 md"""
-Climate models are used by scientists to answer many different questions, including why the Earth’s climate is changing, how it might change in the future, and how it could affect human lives.
+Climate models are used by scientists to answer many different questions, including why the Earth’s climate is changing, how it might change in the future, and how it could affect human lives. 
+
+These images below show just some of the things that the climate affects on our Earth.
 
 """
 
@@ -293,7 +295,7 @@ Anyways, the components in the figure above can be summarized in this equation:
 
 ```math
 \begin{align}
-\text{\color{brown}{Change in heat content over time}} = & + \text{\color{yellow}{absorbed solar radiation}} \newline
+\text{\color{red}{Change in heat content over time}} = & + \text{\color{yellow}{absorbed solar radiation}} \newline
 & - \text{\color{blue}{outgoing thermal radiation}}
 \newline
 & + \text{\color{grey}{human-caused greenhouse effect}}
@@ -324,7 +326,7 @@ $E = CT$
 md"""
 The *change in heat content over time* is thus simply given by $\frac{d(CT)}{dt}$. Since the heat capacity of sea water hardly changes with temperature, we can rewrite this in terms of the change in temperature with time as:
 
-$\color{brown}{\text{change in heat content } =\; C \frac{dT}{dt}}$
+$\color{red}{\text{change in heat content } =\; C \frac{dT}{dt}}$
 """
 
 # ╔═╡ dabca25c-e34b-4aed-8729-132d03c5bb45
@@ -350,7 +352,7 @@ md"""
 
 The total solar Insolation is $S$ = 1368 W/m^2. But not all of the incoming solar radiation is absorbed. In factorial, some of it is reflected back out to space due to reflective surfaces like white clouds, snow, and ice. This we call albedo $\alpha$.
 
-Finally, since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
+Now, since the incoming solar rays are all approximately parallel this far from the Sun, the cross-sectional area of the Earth that intercepts them is just a disc of area $\pi R^{2}$. Since all of the other terms we will consider act on the entire surface area $4\pi R^{2}$ of the spherical Earth, the absorbed solar radiation *per unit surface area* (averaged over the entire globe) is reduced by a factor of 4.
 
 Hence, we end up with this equation (shown again):
 
@@ -359,9 +361,8 @@ $\color{yellow} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
 
 # ╔═╡ 67e22776-bcad-4cac-abf0-637925b20b5b
 md"""
-Now, in the physical world, this differential equation needs physical variables.
 
-In our baking the earth example, we will identify the following quantities:
+Since this is the physical world, let's bake in some values for the physical variables.
 
 - Industrial Revolution Start: 1850
 - Avg Temperature in 1850: 14.0 °C
@@ -378,14 +379,19 @@ In our baking the earth example, we will identify the following quantities:
 
 # ╔═╡ 5123525a-3437-4b76-813c-8ad6b158f7f2
 md"""
-Now consider a situation where you only have incoming solar radiation and have no output (Heating the earth nonstop).
+Let's consider a situation where you only have incoming solar radiation and have no output (Heating the earth nonstop).
 
-So, this equation is really accurately describing our Earth:
+So, we're assuming this equation is really accurately describing our Earth:
 
 
 $C \frac{dT}{dt} =  \frac{S(1-α)}{4}$
 
-Let's solve this simple equation.
+Let's solve the constant on the left hand side of the equation. But, to make things more interesting, because the ice is melting over time, let's say our albedo is variable.
+"""
+
+# ╔═╡ bdeaf2c1-be1a-423f-a016-6ed7690dfb48
+md"""
+albedo = $(@bind α Slider(0:0.01:1; show_value=true, default=0.3))
 """
 
 # ╔═╡ 9123cc7a-acc8-4068-acb1-a79ba522888e
@@ -393,10 +399,14 @@ begin
 	C = 51.; # atmosphere and upper-ocean heat capacity [Wyr/m^2/°C]
 	temp₀ = 14.0 # preindustrial temperature [°C]
 	S = 1368; # solar insolation [W/m^2]  (energy per unit time per unit area)
-	α = 0.3; # albedo, or planetary reflectivity [unitless]
 
 	absorbed_solar_radiation = S*(1 - α)/4; # [W/m^2]
 end
+
+# ╔═╡ b292b8db-93ea-47fb-9688-65c1f578d7a2
+md"""
+And now the ODE.
+"""
 
 # ╔═╡ f3930148-088a-4b50-a487-2c216379a0d0
 p1 = ODEProblem(
@@ -418,7 +428,7 @@ end
 
 # ╔═╡ 087f47b2-8283-4205-88f2-4d5883a340c2
 md"""
-You see how there is a constant increase in temperature. Since the left hand side is a constant, you can see how we have just integrated to get a linear dependency between temperature and time.
+You see how there is a constant increase in temperature. This is a planet where you only have an input of energy! Unrealistic right?
 """
 
 # ╔═╡ 2b66ffaf-a9a3-4ca2-a6e9-732912c9d48e
@@ -431,15 +441,13 @@ md"""
 
 The outgoing thermal radiation term $\mathcal{G}(T)$ (or "blackbody cooling to space") represents the combined effects of *negative feedbacks that dampen warming*, such as **blackbody radiation**, and *positive feedbacks that amplify warming*, such as the **water vapor feedback**.
 
-That's too complex to model in this notebook, so we will linearize the model combining the incoming and the outgoing.  
-
-We assume that the preindustrial world was in energy balance, and thus
+That's too complex to model in this notebook, so we will linearize the model combining the incoming and the outgoing. So, we assume that the preindustrial world was in energy balance, and thus,
 the equilibrium temperature is the preindustrial temperature.
 
-$\frac{dT}{dt} = B(T_0 - T_t)$
+$\frac{dT}{dt} = B(T_0 - T)$
 
-for some value of $B$.
-The minus sign in front of $T_t$ indicating it restores equilibrium.
+for some value of constant $B$.
+The minus sign in front of $T$ indicating it restores equilibrium.
 """
 
 # ╔═╡ edafca88-dd4a-4fe4-8ffc-bb50f7bd561d
@@ -469,6 +477,12 @@ begin
 	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
 	title!("Energy Balance Model (Healthy Earth)")
 end
+
+# ╔═╡ 9390b73e-b600-4dcf-9c62-ec3c6bf9f1b1
+md"""
+In this plot we can now see that it restores equilibrium. But now, the temperature seems a little low. So let's bring ourselves into the equation!
+
+"""
 
 # ╔═╡ 20d6c513-2ca6-4dea-9092-156e2805d467
 md"""
@@ -585,8 +599,7 @@ Many of us have looked at future climate projections (see figure below) and have
 """
 
 # ╔═╡ 873ebb96-2aef-4a79-9ca6-80e4d7477c6e
-html"""<img src="https://eoimages.gsfc.nasa.gov/images/imagerecords/148000/148494/projected_gslm_2300.png
-" height=400>"""
+html"""<img src="https://www.climate.gov/sites/default/files/2022-05/Screen%20Shot%202022-05-13%20at%204.05.00%20PM.png" height=400>"""
 
 # ╔═╡ 3d599b11-ce58-45fb-9f88-f9b5b4ff9687
 md"""
@@ -604,18 +617,70 @@ md"""
 ##### 2.2.1 Model uncertainty
 """
 
-# ╔═╡ d0177b79-ce47-4f86-a49f-9bc25ff4d7f7
+# ╔═╡ a811c194-53d9-4e28-9ab8-69cc073e2c05
 md"""
+
 Model uncertainty arises from using an ensemble of different climate models to make a climate prediction. Each model has assumptions baked into its governing equations which cause the difference in predictions.
 
+There are two types of model uncertainty: **model parameter uncertainty** and **model form uncertainty**.
 
-Let's consider a simple example based on the model developed above:
+1. Models can be different from ground-up due to different assumptions. This causes **model form uncertainty**.
+
+2. Models have coefficients that tuned on empirical data or high-fidelity simulations. Different sets of coefficients cause **model parameter uncertainty**.
+"""
+
+# ╔═╡ 205593e3-c228-48d4-87aa-5d8b57dd444e
+md"""
+
+Let us look at these models:
+
+Model 1: Equilibrium Earth
+
+$\frac{dT}{dt} = B(T_0 - T)$
+
+Model 2: Earth with Humans
+
+$\color{black}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
 
 
-$\color{grey}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(\text{temp}(0)-\text{temp}(t)) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
+"""
 
-In real life, models can be different from ground-up due to different assumptions. Here, we will consider models that are different at the simplest level. 
-Models have coefficients that tuned on empirical data or high-fidelity simulations. Having another set of coefficients can be interpreted as another model. 
+# ╔═╡ 2089338d-2a01-4aa3-ad80-2665f254866a
+md"""
+Let's plot these together.
+
+"""
+
+# ╔═╡ c22f7bea-2c62-427f-b795-3ddd0f15c1cc
+begin
+	# plot(solve(p1),       legend = false, 
+		 # background_color_inside = :black);
+	plot(solve(p2), lw=2);
+	plot!(solve(p3), lw=2, legend = false, background_color_inside = :black);
+
+
+	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
+	annotate!( 80, 25+temp₀, text("Preindustrial Temperature = $(temp₀)°C",color=:white))
+	ylims!(10, 20)
+	title!("Absorbing Solar Radiation (only)")
+	xlabel!("Years since 1850")
+    ylabel!("Temperature (°C)")
+    title!("Model Predictions to 2050")
+end
+
+# ╔═╡ 8dff31b5-0314-4044-a0db-13584163047d
+md"""
+Can you guess which line is which model? As you can see, having just two different models means two different predictions given the same conditions! Think of how much uncertainty would result from having multiple models. This is **model form uncertainty**.
+"""
+
+# ╔═╡ d0177b79-ce47-4f86-a49f-9bc25ff4d7f7
+md"""
+
+
+Now, let's just consider the second model that we developed above:
+
+
+$\color{black}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
 
 
 """
@@ -721,23 +786,33 @@ end
 
 # ╔═╡ 09e7a010-cfbb-455e-91f8-96c0bd435c87
 md"""
-We see how the different coefficients in each model result in different predictions. The spread of results you get from the ensemble of models is called **model uncertainty**.
+We see how the different coefficients in each model result in different predictions. The spread of results you get from the ensemble of models is called **model parameter uncertainty**.
 
 *Test different ranges for the coefficients to see how the climate projects change.*
 """
 
 # ╔═╡ ec649b3b-9e9b-41c7-95c1-d42ac8766849
+md"""
+And now, let's combine the two different model uncertainty types!
+"""
+
+# ╔═╡ 7587a108-9224-4bfe-a5d9-ac3ce8c1e7bc
+@bindname ens_members_temp Slider(2:2:1000, show_value=true, default=2)
 
 
 # ╔═╡ a39a019d-1faa-46f6-a450-ccafbd937ec0
 begin
-	# println(ens_members)
-	solutions_nogreenhouse = solve_ensemble_nogreenhouse(ens_members);
+	half = Int(round(ens_members_temp/2));
+	solutions_nogreenhouse = solve_ensemble_nogreenhouse(half);
+	solutions_withgreenhouse = solve_ensemble(half);
 	
 	plot(legend=false, background_color_inside=:black)
 	
 	for sol in solutions_nogreenhouse
         plot!(sol.t, sol.u, c=:red)
+    end
+	for sol in solutions_withgreenhouse
+        plot!(sol.t, sol.u, c=:blue)
     end
 	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
 	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
@@ -745,14 +820,16 @@ begin
 	xlabel!("Years since 1850")
     ylabel!("Temperature (°C)")
     title!("Model Predictions to 2050")
-
-	# solutions_nogreenhouse
-
 end
 
 
 
 # ╔═╡ 8d4d42db-9c1f-4360-ac55-f26ae208e184
+md"""
+Now you know what modeling uncertainties are!
+"""
+
+# ╔═╡ 2c161307-b93a-4053-972b-c88040538952
 
 
 # ╔═╡ cf34962b-88f3-4318-9f42-47174d725a55
@@ -766,13 +843,14 @@ Another source of uncertainty in the internal climate variability that exists in
 
 Internal variability results when interaction of climate components, including the atmosphere, ocean and sea ice, cause heat to move within the climate system (IPCC, 2013). One simple example of internal climactic variability could be a volcanic eruption and the coupled interactions within the climate system that result from it.
 
-Let's build upon the model that we used to show model uncertainty. We will invoke Gaussian noise assumptions for the internal variability based on the central limit theorem. We will start with a random sample from the standard normal distribution.
+Let's build upon the model that we used to show model uncertainty. We will invoke Gaussian noise assumptions for the internal variability based on the central limit theorem. We will start with a random sample from a normal distribution.
 
 Now, our updated ODE is:
 
-$\color{grey}{ \text{temp}'(t) =  \frac{1}{C} \left[  B(\text{temp}(0)-\text{temp}(t)) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) + \eta \right],}$
+$\color{black}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) + \eta \right],}$
 
-$\color{grey} \eta \sim N(0,1)$
+
+$\color{black} \eta \sim N(0,\sigma^2)$
 
 """
 
@@ -3503,7 +3581,9 @@ version = "1.4.1+1"
 # ╟─5818fd37-0d7a-494c-a7f4-e22833183f2e
 # ╟─67e22776-bcad-4cac-abf0-637925b20b5b
 # ╟─5123525a-3437-4b76-813c-8ad6b158f7f2
+# ╟─bdeaf2c1-be1a-423f-a016-6ed7690dfb48
 # ╠═9123cc7a-acc8-4068-acb1-a79ba522888e
+# ╟─b292b8db-93ea-47fb-9688-65c1f578d7a2
 # ╠═f3930148-088a-4b50-a487-2c216379a0d0
 # ╠═2f19cbac-4f13-4c2b-9b11-fb92e8055527
 # ╟─087f47b2-8283-4205-88f2-4d5883a340c2
@@ -3514,6 +3594,7 @@ version = "1.4.1+1"
 # ╟─af893e1e-3bd7-4d05-83b6-f5f7e751b5e3
 # ╠═333290b0-0198-4306-b19b-6d30df79a280
 # ╠═eeaf3735-5139-4924-9fce-14df51a61042
+# ╟─9390b73e-b600-4dcf-9c62-ec3c6bf9f1b1
 # ╟─20d6c513-2ca6-4dea-9092-156e2805d467
 # ╟─692a6928-c7a2-4b61-a794-16bef5d4e919
 # ╠═6d1058bf-8a05-4b8e-835a-de9e95f567c4
@@ -3536,17 +3617,24 @@ version = "1.4.1+1"
 # ╟─3d599b11-ce58-45fb-9f88-f9b5b4ff9687
 # ╟─d2bd174a-203b-4a74-a4cc-64cb20f890d4
 # ╟─19fbf4e8-f85b-4bdb-adc6-b68f1a7d724a
+# ╟─a811c194-53d9-4e28-9ab8-69cc073e2c05
+# ╟─205593e3-c228-48d4-87aa-5d8b57dd444e
+# ╟─2089338d-2a01-4aa3-ad80-2665f254866a
+# ╟─c22f7bea-2c62-427f-b795-3ddd0f15c1cc
+# ╟─8dff31b5-0314-4044-a0db-13584163047d
 # ╟─d0177b79-ce47-4f86-a49f-9bc25ff4d7f7
 # ╟─610c32b4-e176-42cd-8a67-c2de66f6a3f2
 # ╠═998f79c5-4edd-49de-bcb9-ea78b60e7dd9
 # ╟─0196cb20-b466-42df-a0d1-b5e5feda1878
 # ╟─f020a0a1-dfa0-4293-b360-07703f9be85d
 # ╟─06a37706-eb15-4cca-93e7-bb5b8ebabd26
-# ╠═f557039a-90d5-4fd9-bef0-a8c7d9d96b44
+# ╟─f557039a-90d5-4fd9-bef0-a8c7d9d96b44
 # ╟─09e7a010-cfbb-455e-91f8-96c0bd435c87
 # ╟─ec649b3b-9e9b-41c7-95c1-d42ac8766849
-# ╠═a39a019d-1faa-46f6-a450-ccafbd937ec0
+# ╟─7587a108-9224-4bfe-a5d9-ac3ce8c1e7bc
+# ╟─a39a019d-1faa-46f6-a450-ccafbd937ec0
 # ╟─8d4d42db-9c1f-4360-ac55-f26ae208e184
+# ╟─2c161307-b93a-4053-972b-c88040538952
 # ╟─cf34962b-88f3-4318-9f42-47174d725a55
 # ╟─11fac1eb-4996-49d9-8a41-b6a9474a77b1
 # ╠═5096f659-ab5d-4b28-a44f-31b4405ace5a
