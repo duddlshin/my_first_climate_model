@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.19.45
 
 #> [frontmatter]
 #> chapter = 3
@@ -553,12 +553,91 @@ begin
 	ylabel!("CO₂ (ppm)")
 end
 
+# ╔═╡ 3fd8903a-a160-4185-b048-292e0bb43e01
+md"""
+### Observations from Mauna Loa Volcano 
+
+![Mauna Loa Volcano](https://i.pinimg.com/originals/df/1a/e7/df1ae72cfd5e6d0d535c0ec99e708f6f.jpg)
+
+information is available at
+[https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/law/law2006.txt]
+(https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/law/law2006.txt).
+"""
+
+# ╔═╡ b996d04f-e39e-44c0-981d-6bf9865173f0
+CO2_historical_data_url = "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
+
+# ╔═╡ 4c7876ed-ceec-474d-9233-51463eb64995
+CO2_historical_path = download(CO2_historical_data_url)
+
+# ╔═╡ 1eb2c1e5-5cad-497e-9e79-4979b97b576e
+begin
+
+	CO2_offset = findfirst(!startswith("#"), readlines(CO2_historical_path))
+
+	CO2_historical_data_raw = CSV.read(
+		CO2_historical_path, DataFrame; 
+		header=CO2_offset, 
+		skipto=CO2_offset + 1,
+	);
+
+
+	first(CO2_historical_data_raw, 11)
+end
+
+# ╔═╡ 0955945a-b69c-42d1-8e98-ef40ff8a7f16
+md"""
+Data is in the column `"average"`.
+"""
+
+# ╔═╡ 3e453c1b-9163-4790-b175-97d4df7bd3e4
+md"""
+Oh no, missing data (-99.99)
+"""
+
+# ╔═╡ 695b3b18-b1de-44b4-afb0-89d754382956
+validrowsmask = CO2_historical_data_raw[:, "average"] .> 0
+
+# ╔═╡ 405b40d4-2fe8-4a0f-b69f-9153631237db
+CO2_historical_data = CO2_historical_data_raw[validrowsmask,:];
+
+# ╔═╡ b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
+begin
+	plot( CO2_historical_data[:, "decimal date"] , CO2_historical_data[:, "average"], label="Mauna Loa CO₂ data (Keeling curve)")
+	plot!( years, CO₂.(years.-1850), lw=3 , label="Cubic Fit", legend=:topleft)
+
+	title!("CO₂ observations and fit")
+end
+
 # ╔═╡ 3304174c-289d-47c5-b5ef-161b11e515eb
 md"""
 Climate feedback BB = $(@bind BB Slider(0:.1:4, show_value=true, default=B))
 
 Ocean Heat Capacity CC =$(@bind CC Slider(10:.1:200, show_value=true, default=C))
 """
+
+# ╔═╡ d12b1f31-3194-4689-8d23-2f9e4216d53d
+begin
+	T_url = "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt";
+	T_df = CSV.read(download(T_url),DataFrame, header=false, skipto=6,delim="     ");
+    # T_df = T_df[:,[1,6]]
+	
+end
+
+# ╔═╡ 0e76584c-bab0-400c-aa81-ee57d8d249b1
+p4 = ODEProblem( (temp, p, t)-> (1/CC) * ( BB*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
+
+# ╔═╡ 2ba8294c-7fe5-4a8b-a7f9-b2db6bde2593
+solp4 = solve(p4)
+
+# ╔═╡ 33178bf8-8218-4070-b9c4-b9a8d8a47ebe
+begin
+	plot(years,solp4.(years.-1850),lw=2,label="Predicted Temperature from model", legend=:topleft)
+	xlabel!("year")
+	ylabel!("Temp °C")
+	
+	plot!( T_df[:,1], parse.(Float64, T_df[:,2]) .+ 14.15, color=:black, label="NASA Observations", legend=:topleft)
+end
 
 # ╔═╡ 28acb5a4-2a5f-49c5-9c78-deb40fdeed36
 md""" #####  Best- and worst-case projections of future global warming
@@ -987,7 +1066,7 @@ PlutoUI = "~0.7.48"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.5"
+julia_version = "1.10.2"
 manifest_format = "2.0"
 project_hash = "84be7df5c283a123fd84ef23e9559e7c8b8286a7"
 
@@ -1245,7 +1324,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.1+0"
+version = "1.1.0+0"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "802bb88cd69dfd1509f6670416bd4434015693ad"
@@ -3458,7 +3537,7 @@ version = "0.15.2+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.11.0+0"
+version = "5.8.0+1"
 
 [[deps.libdecor_jll]]
 deps = ["Artifacts", "Dbus_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pango_jll", "Wayland_jll", "xkbcommon_jll"]
@@ -3605,7 +3684,20 @@ version = "1.4.1+1"
 # ╟─99629ec2-dc70-4253-b191-305bccc9f36b
 # ╠═6b2beeec-6383-42b3-b694-8d77b961c8a1
 # ╠═0b24f105-0166-4a41-97aa-156417d7203a
+# ╟─3fd8903a-a160-4185-b048-292e0bb43e01
+# ╠═b996d04f-e39e-44c0-981d-6bf9865173f0
+# ╠═4c7876ed-ceec-474d-9233-51463eb64995
+# ╠═1eb2c1e5-5cad-497e-9e79-4979b97b576e
+# ╟─0955945a-b69c-42d1-8e98-ef40ff8a7f16
+# ╟─3e453c1b-9163-4790-b175-97d4df7bd3e4
+# ╠═695b3b18-b1de-44b4-afb0-89d754382956
+# ╠═405b40d4-2fe8-4a0f-b69f-9153631237db
+# ╠═b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
+# ╠═33178bf8-8218-4070-b9c4-b9a8d8a47ebe
 # ╟─3304174c-289d-47c5-b5ef-161b11e515eb
+# ╠═d12b1f31-3194-4689-8d23-2f9e4216d53d
+# ╠═0e76584c-bab0-400c-aa81-ee57d8d249b1
+# ╠═2ba8294c-7fe5-4a8b-a7f9-b2db6bde2593
 # ╟─28acb5a4-2a5f-49c5-9c78-deb40fdeed36
 # ╟─13b003d2-1fd4-4a4a-960c-4a1d9b673dc6
 # ╟─a2288816-3621-4871-9faf-3e9c78674969
