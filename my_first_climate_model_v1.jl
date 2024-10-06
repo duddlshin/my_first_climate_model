@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.19.45
 
 #> [frontmatter]
 #> chapter = 3
@@ -221,6 +221,11 @@ begin
 	points = 300;
 	x = range(0,3,points);
 
+	x_box = [1.0, 1.1, 1.1, 1.0, 1.0]  # Close the box by adding the first point at the end
+	y_box = [1.3, 1.3, 2.6, 2.6, 1.3]  # Close the box by adding the first point at the end
+	 
+
+	
 	# Example of a rising function
 	y = 0.5*exp.(x);
 	y_pert1 = y .+ rand(points);
@@ -231,10 +236,12 @@ begin
 		xticks=:none, yticks=:none, 
 		legend=:false, xlims=(0.5,2.5), 
 		margin=10mm, title="Climate", titlefontsize=16, linecolor=:blue);
+	# Plot the box
+	plot!(x_box, y_box, seriestype = :shape, fillalpha = 0.1, linecolor=:red, lw = 2, label = "Box")
 	p_2 = plot(x, y_pert2, lw=3, 
 		xlabel="Time (days)", ylabel="", xlabelfontsize=16, ylabelfontsize=16, 
 		xticks=:none, yticks=:none, 
-		legend=:false, xlims=(0.5,0.9), ylims=(0,3), title="Weather", titlefontsize=16, linecolor=:blue);
+		legend=:false, xlims=(0.5,0.9), ylims=(0,3), title="Weather", titlefontsize=16, linecolor=:red);
 	
 	plot(p_1, p_2, layout=(1, 2), size=(1000,400))
 end
@@ -295,7 +302,7 @@ Anyways, the components in the figure above can be summarized in this equation:
 
 ```math
 \begin{align}
-\text{\color{red}{Change in heat content over time}} = & + \text{\color{yellow}{absorbed solar radiation}} \newline
+\text{\color{red}{Change in heat content over time}} = & + \text{\color{orange}{absorbed solar radiation}} \newline
 & - \text{\color{blue}{outgoing thermal radiation}}
 \newline
 & + \text{\color{grey}{human-caused greenhouse effect}}
@@ -339,7 +346,7 @@ md"""
 
 The earth absorbing the incoming solar radiation (per unit area) can be expressed with this equation 
 
-$\color{yellow} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
+$\color{orange} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
 
 Now is a great time to ask, why?
 """
@@ -356,7 +363,7 @@ Now, since the incoming solar rays are all approximately parallel this far from 
 
 Hence, we end up with this equation (shown again):
 
-$\color{yellow} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
+$\color{orange} {\text{absorbed solar radiation} =  \frac{S(1-α)}{4}}$
 """
 
 # ╔═╡ 67e22776-bcad-4cac-abf0-637925b20b5b
@@ -493,11 +500,7 @@ Empirically, the greenhouse effect is known to be a logarithmic function of gase
 $\color{grey}{\text{human-caused greenhouse effect}\; = {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right),}$
 
 How this depends on time into the future depends on human behavior!
-Time is not modelled in the above equation.
 """
-
-# ╔═╡ 692a6928-c7a2-4b61-a794-16bef5d4e919
-md"where"
 
 # ╔═╡ 6d1058bf-8a05-4b8e-835a-de9e95f567c4
 begin
@@ -518,6 +521,39 @@ begin
 	plot!([CO2_present], [greenhouse_effect(CO2_present)], marker=:circle, ms=6, color=:red, linecolor=:white, lw=0, label="present day (2020)")
 	plot!(xticks=[280, 280*2, 280*4, 280*8], legend=:bottomright, size=(400, 250))
 	plot!(ylabel="Radiative forcing [W/m²]", xlabel="CO₂ concentration [ppm]")
+end
+
+# ╔═╡ fac5012a-960c-473c-bbf0-62c0be87f608
+begin
+	 # CO₂(t) = CO₂_PreIndust # no emissions
+	 # CO₂(t) = CO₂_PreIndust * 1.01^t # test model
+	 CO₂(t) = CO₂_PreIndust * (1+ (t/220)^3 ) 
+end
+
+# ╔═╡ 1a4d21bd-85ad-4935-913a-8992a8996db4
+greenhouse_effect(CO₂(15))
+
+# ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
+p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
+
+# ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
+begin
+	plot(solve(p3),       legend = false, 
+		 background_color_inside = :black,
+		                  xlabel = "years from 1850",
+	                      ylabel = "Temperature °C",
+	                      ylim = (10, 20))
+	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
+	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
+	title!("Model with CO₂")
+end
+
+# ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
+begin
+	years = 1850:2050
+	plot( years, CO₂.(years.-1850), lw=3, legend=false)
+	xlabel!("year")
+	ylabel!("CO₂ (ppm)")
 end
 
 # ╔═╡ 3fd8903a-a160-4185-b048-292e0bb43e01
@@ -570,46 +606,21 @@ CO2_historical_data = CO2_historical_data_raw[validrowsmask,:];
 
 # ╔═╡ 14e92a16-faf8-49a2-b007-d6ee5b28bed5
 md"""
-This is what calibration in real life looks like.
+Now, we need to fit the CO2 model to the historical data.
+This is our model:
+
+$CO_2 (t) = CO_{2,preindust} (1 + (\frac{1}{constant})^3)$
+
+This what calibration in real life looks like.
 """
 
 # ╔═╡ 919537d9-b89a-424e-9459-493d69888c0f
-@bindname empirical_coefficient Slider(100:300, show_value=true, default=200)
+@bindname constant Slider(200:300, show_value=true, default=215)
 
 
-# ╔═╡ fac5012a-960c-473c-bbf0-62c0be87f608
+# ╔═╡ ada9172c-a204-4153-87fb-a98703b931d8
 begin
-	 # CO₂(t) = CO₂_PreIndust # no emissions
-	 # CO₂(t) = CO₂_PreIndust * 1.01^t # test model
-	 CO₂(t) = CO₂_PreIndust * (1+ (t/220)^3 ) 
-
-	 CO₂_temp(t) = CO₂_PreIndust * (1+ (t/empirical_coefficient)^3 ) 
-end
-
-# ╔═╡ 1a4d21bd-85ad-4935-913a-8992a8996db4
-greenhouse_effect(CO₂(15))
-
-# ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
-p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
-
-# ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
-begin
-	plot(solve(p3),       legend = false, 
-		 background_color_inside = :black,
-		                  xlabel = "years from 1850",
-	                      ylabel = "Temperature °C",
-	                      ylim = (10, 20))
-	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
-	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
-	title!("Model with CO₂")
-end
-
-# ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
-begin
-	years = 1850:2050
-	plot( years, CO₂.(years.-1850), lw=3, legend=false)
-	xlabel!("year")
-	ylabel!("CO₂ (ppm)")
+	CO₂_temp(t) = CO₂_PreIndust * (1+ (t/constant)^3 ) 
 end
 
 # ╔═╡ b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
@@ -1077,7 +1088,7 @@ PlutoUI = "~0.7.48"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.5"
+julia_version = "1.10.2"
 manifest_format = "2.0"
 project_hash = "84be7df5c283a123fd84ef23e9559e7c8b8286a7"
 
@@ -1335,7 +1346,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.1+0"
+version = "1.1.0+0"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "802bb88cd69dfd1509f6670416bd4434015693ad"
@@ -3548,7 +3559,7 @@ version = "0.15.2+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.11.0+0"
+version = "5.8.0+1"
 
 [[deps.libdecor_jll]]
 deps = ["Artifacts", "Dbus_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pango_jll", "Wayland_jll", "xkbcommon_jll"]
@@ -3672,9 +3683,9 @@ version = "1.4.1+1"
 # ╟─67e22776-bcad-4cac-abf0-637925b20b5b
 # ╟─5123525a-3437-4b76-813c-8ad6b158f7f2
 # ╟─bdeaf2c1-be1a-423f-a016-6ed7690dfb48
-# ╠═9123cc7a-acc8-4068-acb1-a79ba522888e
+# ╟─9123cc7a-acc8-4068-acb1-a79ba522888e
 # ╟─b292b8db-93ea-47fb-9688-65c1f578d7a2
-# ╠═f3930148-088a-4b50-a487-2c216379a0d0
+# ╟─f3930148-088a-4b50-a487-2c216379a0d0
 # ╠═2f19cbac-4f13-4c2b-9b11-fb92e8055527
 # ╟─087f47b2-8283-4205-88f2-4d5883a340c2
 # ╟─2b66ffaf-a9a3-4ca2-a6e9-732912c9d48e
@@ -3686,12 +3697,11 @@ version = "1.4.1+1"
 # ╠═eeaf3735-5139-4924-9fce-14df51a61042
 # ╟─9390b73e-b600-4dcf-9c62-ec3c6bf9f1b1
 # ╟─20d6c513-2ca6-4dea-9092-156e2805d467
-# ╟─692a6928-c7a2-4b61-a794-16bef5d4e919
 # ╠═6d1058bf-8a05-4b8e-835a-de9e95f567c4
 # ╠═437faadd-0301-403a-bcd7-18ce279589d0
 # ╠═1a4d21bd-85ad-4935-913a-8992a8996db4
 # ╠═ee6414b7-e92d-4055-af17-6b02f05c28cd
-# ╟─fac5012a-960c-473c-bbf0-62c0be87f608
+# ╠═fac5012a-960c-473c-bbf0-62c0be87f608
 # ╟─99629ec2-dc70-4253-b191-305bccc9f36b
 # ╠═6b2beeec-6383-42b3-b694-8d77b961c8a1
 # ╠═0b24f105-0166-4a41-97aa-156417d7203a
@@ -3704,6 +3714,7 @@ version = "1.4.1+1"
 # ╠═695b3b18-b1de-44b4-afb0-89d754382956
 # ╠═405b40d4-2fe8-4a0f-b69f-9153631237db
 # ╟─14e92a16-faf8-49a2-b007-d6ee5b28bed5
+# ╠═ada9172c-a204-4153-87fb-a98703b931d8
 # ╠═919537d9-b89a-424e-9459-493d69888c0f
 # ╠═b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
 # ╠═33178bf8-8218-4070-b9c4-b9a8d8a47ebe
