@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.45
+# v0.19.46
 
 #> [frontmatter]
 #> chapter = 3
@@ -520,39 +520,6 @@ begin
 	plot!(ylabel="Radiative forcing [W/m²]", xlabel="CO₂ concentration [ppm]")
 end
 
-# ╔═╡ fac5012a-960c-473c-bbf0-62c0be87f608
-begin
-	 # CO₂(t) = CO₂_PreIndust # no emissions
-	 # CO₂(t) = CO₂_PreIndust * 1.01^t # test model
-	 CO₂(t) = CO₂_PreIndust * (1+ (t/220)^3 ) 
-end
-
-# ╔═╡ 1a4d21bd-85ad-4935-913a-8992a8996db4
-greenhouse_effect(CO₂(15))
-
-# ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
-p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
-
-# ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
-begin
-	plot(solve(p3),       legend = false, 
-		 background_color_inside = :black,
-		                  xlabel = "years from 1850",
-	                      ylabel = "Temperature °C",
-	                      ylim = (10, 20))
-	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
-	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
-	title!("Model with CO₂")
-end
-
-# ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
-begin
-	years = 1850:2050
-	plot( years, CO₂.(years.-1850), lw=3, legend=false)
-	xlabel!("year")
-	ylabel!("CO₂ (ppm)")
-end
-
 # ╔═╡ 3fd8903a-a160-4185-b048-292e0bb43e01
 md"""
 ### Observations from Mauna Loa Volcano 
@@ -601,10 +568,54 @@ validrowsmask = CO2_historical_data_raw[:, "average"] .> 0
 # ╔═╡ 405b40d4-2fe8-4a0f-b69f-9153631237db
 CO2_historical_data = CO2_historical_data_raw[validrowsmask,:];
 
+# ╔═╡ 14e92a16-faf8-49a2-b007-d6ee5b28bed5
+md"""
+This is what calibration in real life looks like.
+"""
+
+# ╔═╡ 919537d9-b89a-424e-9459-493d69888c0f
+@bindname empirical_coefficient Slider(100:300, show_value=true, default=200)
+
+
+# ╔═╡ fac5012a-960c-473c-bbf0-62c0be87f608
+begin
+	 # CO₂(t) = CO₂_PreIndust # no emissions
+	 # CO₂(t) = CO₂_PreIndust * 1.01^t # test model
+	 CO₂(t) = CO₂_PreIndust * (1+ (t/220)^3 ) 
+
+	 CO₂_temp(t) = CO₂_PreIndust * (1+ (t/empirical_coefficient)^3 ) 
+end
+
+# ╔═╡ 1a4d21bd-85ad-4935-913a-8992a8996db4
+greenhouse_effect(CO₂(15))
+
+# ╔═╡ 99629ec2-dc70-4253-b191-305bccc9f36b
+p3 = ODEProblem( (temp, p, t)-> (1/C) * ( B*(temp₀-temp)  + greenhouse_effect(CO₂(t))    ) , start_temp,  (0.0, 170) )
+
+# ╔═╡ 6b2beeec-6383-42b3-b694-8d77b961c8a1
+begin
+	plot(solve(p3),       legend = false, 
+		 background_color_inside = :black,
+		                  xlabel = "years from 1850",
+	                      ylabel = "Temperature °C",
+	                      ylim = (10, 20))
+	hline!( [temp₀,temp₀] ,c=:white,ls=:dash)
+	annotate!( 80, temp₀, text("Preindustrial Temperature = $(temp₀)°C",:bottom,color=:white))
+	title!("Model with CO₂")
+end
+
+# ╔═╡ 0b24f105-0166-4a41-97aa-156417d7203a
+begin
+	years = 1850:2050
+	plot( years, CO₂.(years.-1850), lw=3, legend=false)
+	xlabel!("year")
+	ylabel!("CO₂ (ppm)")
+end
+
 # ╔═╡ b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
 begin
 	plot( CO2_historical_data[:, "decimal date"] , CO2_historical_data[:, "average"], label="Mauna Loa CO₂ data (Keeling curve)")
-	plot!( years, CO₂.(years.-1850), lw=3 , label="Cubic Fit", legend=:topleft)
+	plot!( years, CO₂_temp.(years.-1850), lw=3 , label="Cubic Fit", legend=:topleft)
 
 	title!("CO₂ observations and fit")
 end
@@ -719,7 +730,7 @@ $\frac{dT}{dt} = B(T_0 - T)$
 
 Model 2: Earth with Humans
 
-$\color{black}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
+${ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) \right],}$
 
 
 """
@@ -926,10 +937,10 @@ Let's build upon the model that we used to show model uncertainty. We will invok
 
 Now, our updated ODE is:
 
-$\color{black}{ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) + \eta \right],}$
+${ \frac{dT}{dt} =  \frac{1}{C} \left[  B(T_0-T) + {\mbox {(forcing\_coef)}} \ln \left( \frac{[\text{CO}₂]}{[\text{CO}₂]_{\text{PreIndust}}} \right) + \eta \right],}$
 
 
-$\color{black} \eta \sim N(0,\sigma^2)$
+$\eta \sim N(0,\sigma^2)$
 
 """
 
@@ -1066,7 +1077,7 @@ PlutoUI = "~0.7.48"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.2"
+julia_version = "1.10.5"
 manifest_format = "2.0"
 project_hash = "84be7df5c283a123fd84ef23e9559e7c8b8286a7"
 
@@ -1324,7 +1335,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "802bb88cd69dfd1509f6670416bd4434015693ad"
@@ -3537,7 +3548,7 @@ version = "0.15.2+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.8.0+1"
+version = "5.11.0+0"
 
 [[deps.libdecor_jll]]
 deps = ["Artifacts", "Dbus_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pango_jll", "Wayland_jll", "xkbcommon_jll"]
@@ -3680,7 +3691,7 @@ version = "1.4.1+1"
 # ╠═437faadd-0301-403a-bcd7-18ce279589d0
 # ╠═1a4d21bd-85ad-4935-913a-8992a8996db4
 # ╠═ee6414b7-e92d-4055-af17-6b02f05c28cd
-# ╠═fac5012a-960c-473c-bbf0-62c0be87f608
+# ╟─fac5012a-960c-473c-bbf0-62c0be87f608
 # ╟─99629ec2-dc70-4253-b191-305bccc9f36b
 # ╠═6b2beeec-6383-42b3-b694-8d77b961c8a1
 # ╠═0b24f105-0166-4a41-97aa-156417d7203a
@@ -3692,6 +3703,8 @@ version = "1.4.1+1"
 # ╟─3e453c1b-9163-4790-b175-97d4df7bd3e4
 # ╠═695b3b18-b1de-44b4-afb0-89d754382956
 # ╠═405b40d4-2fe8-4a0f-b69f-9153631237db
+# ╟─14e92a16-faf8-49a2-b007-d6ee5b28bed5
+# ╠═919537d9-b89a-424e-9459-493d69888c0f
 # ╠═b3ee5adb-6c4a-4a72-8e6f-f31bca231a6f
 # ╠═33178bf8-8218-4070-b9c4-b9a8d8a47ebe
 # ╟─3304174c-289d-47c5-b5ef-161b11e515eb
