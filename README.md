@@ -1,6 +1,7 @@
 Pluto notebook derived from MIT class: (Julia: Solving Real-World Problems with Computation, Fall 2024)
 
 Homework project by Ethan Shin and Joe Palmo
+
 Last modified: 10/06/2024
 
 Content:
